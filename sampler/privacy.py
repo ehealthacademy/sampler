@@ -1,9 +1,10 @@
+from collections.abc import Iterable
 from uuid import uuid4
 
 import pandas as pd
 
 
-def generate_anonymized_id_mapping(ids: list[str]) -> dict[str, str]:
+def generate_anonymized_id_mapping(ids: Iterable[str]) -> dict[str, str]:
     mapping = {v: str(uuid4()) for v in ids}
 
     # ensure no collisions

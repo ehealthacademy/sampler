@@ -10,7 +10,7 @@ class Config:
     end_period: date
 
 
-def read_config(filename) -> Config:
+def read_config(filename: str) -> Config:
     with open(filename) as file:
         config_data = json.load(file)
 

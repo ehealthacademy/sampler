@@ -2,6 +2,7 @@ import re
 from collections.abc import Iterable
 from datetime import datetime
 from functools import partial
+from typing import Any
 
 import pandas as pd
 
@@ -25,19 +26,19 @@ class WrongColumnTypeError(Exception):
     column: str
     error: Exception
 
-    def __init__(self, column, error: Exception):
+    def __init__(self, column: str, error: Exception):
         super().__init__(f"Wrong type in column: {column}: {error}")
         self.column = column
         self.error = error
 
 
-def as_str(col_name, col):
+def as_str(col_name: str, col: Any) -> str:
     if not isinstance(col, str):
         raise WrongColumnTypeError(col_name, ValueError(f"Expected string, got {col}"))
     return col
 
 
-def as_yyyymmdd(col_name, col):
+def as_yyyymmdd(col_name: str, col: Any) -> str:
     if not isinstance(col, str):
         raise WrongColumnTypeError(col_name, ValueError(f"Expected string, got {col}"))
     if not re.match(r"\d{4}-\d{2}-\d{2}", col):
@@ -45,7 +46,7 @@ def as_yyyymmdd(col_name, col):
     return bucketize_cohort(col)
 
 
-def as_iso_timestamp(col_name, col) -> pd.Timestamp:
+def as_iso_timestamp(col_name: str, col: Any) -> pd.Timestamp:
     if not isinstance(col, str):
         raise WrongColumnTypeError(col_name, ValueError(f"Expected string, got {col}"))
     if not re.match(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}", col):

@@ -4,7 +4,7 @@ import os
 from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import date
-from typing import Optional
+from typing import Any, Optional
 
 import pandas as pd
 
@@ -27,8 +27,19 @@ def filter_events(
 
 
 def history_length_per_professional(events: pd.DataFrame) -> pd.DataFrame:
-    df_agg = events.groupby(["organization_id", "professional_id", "professional_cohort"]).size()
-    return df_agg.reset_index(name="history_length")
+    df_agg = events.groupby(
+        ["organization_id", "professional_id", "professional_cohort"],
+        as_index=False,
+    ).size()
+    df_agg.columns = pd.Index(
+        [
+            "organization_id",
+            "professional_id",
+            "professional_cohort",
+            "history_length",
+        ]
+    )
+    return df_agg.reset_index()
 
 
 def calculate_bucket_size(events: pd.DataFrame) -> pd.DataFrame:
@@ -36,7 +47,12 @@ def calculate_bucket_size(events: pd.DataFrame) -> pd.DataFrame:
         {"history_length": ["size", "mean"]},
         as_index=False,
     )
-    df_agg.columns = ["bucket_size", "avg_history_length"]
+    df_agg.columns = pd.Index(
+        [
+            "bucket_size",
+            "avg_history_length",
+        ]
+    )
     return df_agg.reset_index()
 
 
@@ -85,25 +101,25 @@ def assign_sample_count(buckets: pd.DataFrame, sample_size: int) -> pd.DataFrame
     return filtered_df
 
 
-def sample_from_bucket(history: pd.DataFrame, bucket: dict[str, str], sample_count: int) -> list[str]:
+def sample_from_bucket(history: pd.DataFrame, bucket: dict[str, Any], sample_count: int) -> list[str]:
     # Will return the professional_ids sampled from the bucket
 
-    condition = True
+    condition = pd.Series([True] * len(history))
     for column, value in bucket.items():
         condition = condition & (history[column] == value)
 
     bucket_data = history[condition]
-    sample = bucket_data.sample(n=sample_count)  # TODO: do something smarter here?
+    df = bucket_data.sample(n=sample_count)  # TODO: do something smarter here?
 
-    if len(sample) != sample_count:
+    if len(df) != sample_count:
         err_msg = "The number of sampled professionals is not equal to the expected samples"
         raise ValueError(err_msg)
 
-    return sample["professional_id"].tolist()
+    return df["professional_id"].to_list()
 
 
 def sample_professionals(history: pd.DataFrame, sampled_buckets: pd.DataFrame) -> list[str]:
-    sampled_professionals = []
+    sampled_professionals: list[str] = []
     for row in sampled_buckets.itertuples():
         bucket_definition = {
             "organization_id": row.organization_id,
@@ -119,11 +135,11 @@ def sample_professionals(history: pd.DataFrame, sampled_buckets: pd.DataFrame) -
 @dataclass
 class Result:
     sampled_professionals: list[str]
+    configuration: dict
     id_mappings: Mappings
     samples: pd.DataFrame
-    configuration: dict = None
 
-    def save_to(self, output_dir: str):
+    def save_to(self, output_dir: str) -> None:
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
 
@@ -145,7 +161,7 @@ def sample(
     output_sample_count: int,
     after: Optional[date] = None,
     until: Optional[date] = None,
-    excluded_ids: Iterable[str] = [],
+    excluded_ids: Optional[Iterable[str]] = None,
     mappings: Optional[Mappings] = None,
     include_all_in_output: bool = False,
 ) -> Result:
@@ -157,6 +173,9 @@ def sample(
 
     if not mappings:
         mappings = Mappings({}, {})
+
+    if not excluded_ids:
+        excluded_ids = []
 
     ids_excluded_for_sampling = set(excluded_ids).union(set(mappings.professionals.keys()))
     filtered_for_sampling = filter_events(df, after, until, ids_excluded_for_sampling)
@@ -175,7 +194,7 @@ def sample(
         professionals_in_output.extend(set(mappings.professionals.keys()))
 
         # if something is in the excluded_ids, we remove it
-        professionals_in_output = set(professionals_in_output) - set(excluded_ids)
+        professionals_in_output = list(set(professionals_in_output) - set(excluded_ids))
 
     # filter again without the mapped ids
     filtered = filter_events(df, after, until, excluded_ids)

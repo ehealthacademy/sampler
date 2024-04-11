@@ -3,7 +3,7 @@ from datetime import date
 from sampler.config import Mappings, read_config
 
 
-def test_config_parser():
+def test_config_parser() -> None:
     config_filename = "./tests/data/config.json"
 
     config = read_config(config_filename)
@@ -13,7 +13,7 @@ def test_config_parser():
     assert config.end_period == date(2024, 4, 1)
 
 
-def test_mappings_parser():
+def test_mappings_parser() -> None:
     mappings_filename = "./tests/data/id_mappings.json"
 
     mappings = Mappings.load_from_file(mappings_filename)

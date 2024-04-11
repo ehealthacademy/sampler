@@ -18,19 +18,19 @@ from sampler.utils import bucketize_cohort
 
 
 @pytest.fixture
-def dataset():
+def dataset() -> pd.DataFrame:
     return parse_events("./tests/data/example_data_20240306.csv")
 
 
 class TestFilter:
-    def test_filters_by_date(self, dataset):
+    def test_filters_by_date(self, dataset: pd.DataFrame) -> None:
         filtered = filter_events(dataset, date(2023, 4, 3), date(2023, 4, 6))
         assert len(filtered) == 28
 
         assert (filtered["ts"] >= pd.Timestamp(date(2023, 4, 3))).all()
         assert (filtered["ts"] <= pd.Timestamp(date(2023, 4, 6))).all()
 
-    def test_filters_by_date_and_excluded_ids(self, dataset):
+    def test_filters_by_date_and_excluded_ids(self, dataset: pd.DataFrame) -> None:
         filtered = filter_events(
             dataset,
             date(2023, 4, 3),
@@ -56,14 +56,14 @@ class TestFilter:
 
 
 class TestProcessing:
-    def test_history_length_per_professional(self, dataset):
+    def test_history_length_per_professional(self, dataset: pd.DataFrame) -> None:
         df = history_length_per_professional(dataset)
         df_agg = df[df["professional_id"] == "10952ac2-b14f-4b8b-b0f6-55e7b4f701a8"]
 
         assert len(df_agg) == 1
         assert (df_agg["history_length"] == 608).all()
 
-    def test_calculate_bucket_size(self, dataset):
+    def test_calculate_bucket_size(self, dataset: pd.DataFrame) -> None:
         df = history_length_per_professional(dataset)
         buckets = calculate_bucket_size(df)
         selected = buckets[
@@ -74,7 +74,7 @@ class TestProcessing:
         assert len(selected) == 1
         assert (selected["bucket_size"] == 10).all()
 
-    def test_assign_sample_count(self, dataset):
+    def test_assign_sample_count(self, dataset: pd.DataFrame) -> None:
         total = 50
         df = history_length_per_professional(dataset)
         buckets = calculate_bucket_size(df)
@@ -82,7 +82,7 @@ class TestProcessing:
         assert len(buckets) == 47
         assert buckets["expected_samples"].sum() == total
 
-    def test_sample_from_bucket(self, dataset):
+    def test_sample_from_bucket(self, dataset: pd.DataFrame) -> None:
         total = 50
         df = history_length_per_professional(dataset)
         buckets = calculate_bucket_size(df)
@@ -101,10 +101,9 @@ class TestProcessing:
             expected_samples,
         )
 
-        print(sampled)
         assert len(sampled) == expected_samples
 
-    def test_sample_professionals(self, dataset):
+    def test_sample_professionals(self, dataset: pd.DataFrame) -> None:
         total = 3
         df = history_length_per_professional(dataset)
         buckets = calculate_bucket_size(df)
@@ -118,7 +117,7 @@ class TestProcessing:
 
 
 class TestSampler:
-    def test_sample(self, dataset):
+    def test_sample(self, dataset: pd.DataFrame) -> None:
         sampled = sample(dataset, 30, excluded_ids=["8e129b1d-43bc-4d70-ad2f-dd924c0b3b03"])
 
         assert len(sampled.sampled_professionals) == 30
