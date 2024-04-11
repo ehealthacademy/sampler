@@ -1,0 +1,4 @@
+organization_id,professional_id,professional_cohortes,ts,event_type
+ae124611-d5d9-4fb6-a63e-f4580ea52d16,30c91a7c-ce2f-452a-9d8b-9a7f89332727,2019-01-01,2021-01-05T09:45:43,client_account_created
+ae124611-d5d9-4fb6-a63e-f4580ea52d16,30c91a7c-ce2f-452a-9d8b-9a7f89332727,2019-01-01,2021-01-05T09:45:43,intervention_added
+b4a56e81-79c7-4ebe-908d-6ac70f553ca1,674a93d1-86a6-4827-a99f-58ec32824e5e,2019-01-01,2021-01-05T10:59:40,client_account_created
